@@ -67,4 +67,3 @@ func createDsn() string {
     dbPort := os.Getenv("DB_PORT")        // Get database port from environment variable
     return fmt.Sprintf(dsnFormat, dbHost, dbUser, dbPassword, dbName, dbPort) // Return formatted DSN string
 }
-

@@ -1,27 +1,34 @@
-# Dockerfile
-
-# Use the official Golang image
-FROM golang:1.20
-
-# Set the Current Working Directory inside the container
+# Step 1: Use the official Golang image to build the application
+FROM golang:1.19 AS builder
 WORKDIR /app
 
-# Copy go.mod and go.sum files
-COPY go.mod ./
-COPY go.sum ./
-COPY wait-for-db.sh /usr/local/bin/wait-for-db
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+# Copy all Go modules and dependencies
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code into the container
+# Copy the source code
 COPY . .
 
-# Build the Go app
-RUN go build -o main .
+# Build the application
+RUN go build -o app main.go
 
-# Expose port 8080 to the outside world
+# Step 2: Use a smaller image to run the built application
+FROM debian:bookworm-slim
+WORKDIR /app
+
+# Copy the built binary from the builder stage
+COPY --from=builder /app/app .
+
+# Set environment variables for the database connection (optional)
+ENV DB_HOST=${DB_HOST}
+ENV DB_PORT=${DB_PORT}
+ENV DB_USER=${DB_USER}
+ENV DB_PASSWORD=${DB_PASSWORD}
+ENV DB_NAME=${DB_NAME}
+
+# Expose the application port
 EXPOSE 8080
 
-# Command to run the executable
-CMD ["./main"]
+# Run the binary
+CMD ["./app"]
 
